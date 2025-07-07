@@ -1,0 +1,1 @@
+{"Name": {"type": "name", "lang": "en"}, "Employee_number": {"type": "number", "digits": 5}, "Employee_Designation": {"type": "list"}}
