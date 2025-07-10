@@ -12,6 +12,9 @@ import base64
 import io
 import json
 import time
+from flask import Flask, request, jsonify, render_template_string, send_from_directory
+from pathlib import Path
+
 
 app = Flask(__name__)
 
@@ -34,6 +37,8 @@ DOC_MODEL_PATHS = {
     "Marksheet": None,
     "Transgender Certificate": "/home/stark/Desktop/Document Verification/models/trans_best.pt"
 }
+
+
 
 def extract_text_from_bbox(image, bbox, debug=False):
     """
@@ -402,6 +407,133 @@ def extract_caste_fields(image):
         fields["caste_category"] = category_match.group(1).strip().title()
 
     return fields
+
+# Add this new route for serving annotated images
+@app.route('/annotated_image/<filename>')
+def serve_annotated_image(filename):
+    """Serve annotated images"""
+    try:
+        return send_from_directory(OUTPUT_FOLDER, filename)
+    except FileNotFoundError:
+        return jsonify({'error': 'Image not found'}), 404
+
+# Updated verify_multiple route to include annotated images
+@app.route('/verify_multiple', methods=['POST'])
+def verify_multiple_documents():
+    try:
+        # Get applicant name
+        applicant_name = request.form.get('applicant_name')
+        if not applicant_name:
+            return jsonify({'error': 'Applicant name is required'}), 400
+        
+        # Get files
+        files = request.files.getlist('files')
+        if not files:
+            return jsonify({'error': 'No files uploaded'}), 400
+        
+        # Get document types
+        document_types = json.loads(request.form.get('document_types', '{}'))
+        
+        results = []
+        successful_matches = 0
+        total_confidence = 0
+        processing_start = time.time()
+        
+        for file in files:
+            if file.filename == '':
+                continue
+                
+            try:
+                # Save uploaded file
+                file_id = uuid.uuid4().hex[:8]
+                file_extension = file.filename.split('.')[-1].lower()
+                file_path = os.path.join(UPLOAD_FOLDER, f"{file_id}.{file_extension}")
+                file.save(file_path)
+                
+                # Get document type
+                doc_type = document_types.get(file.filename, '')
+                if not doc_type:
+                    continue
+                
+                # Load and process image
+                image = load_image(file_path)
+                model_path = DOC_MODEL_PATHS.get(doc_type)
+                
+                # Process document
+                fields = {}
+                confidence = 0
+                annotated_image_url = None
+                
+                if doc_type == "Bonafide Certificate":
+                    fields = extract_bonafide_fields(image)
+                    confidence = calculate_bonafide_confidence(fields, applicant_name)
+                    
+                elif doc_type == "Caste Certificate":
+                    fields = extract_caste_fields(image)
+                    confidence = calculate_caste_confidence(fields, applicant_name)
+                    
+                elif doc_type == "Marksheet":
+                    fields = extract_marksheet_fields(image)
+                    confidence = calculate_marksheet_confidence(fields, applicant_name)
+                    
+                else:
+                    # YOLO + OCR processing
+                    if model_path and os.path.exists(model_path):
+                        fields, annotated_image = run_yolo_ocr(image, model_path)
+                        confidence = calculate_yolo_confidence(fields, applicant_name, doc_type)
+                        
+                        # Save annotated image
+                        annotated_filename = f"annotated_{file_id}.jpg"
+                        output_path = os.path.join(OUTPUT_FOLDER, annotated_filename)
+                        cv2.imwrite(output_path, annotated_image)
+                        annotated_image_url = f"/annotated_image/{annotated_filename}"
+                
+                # Count successful matches
+                if confidence >= 60:
+                    successful_matches += 1
+                
+                total_confidence += confidence
+                
+                result = {
+                    'filename': file.filename,
+                    'document_type': doc_type,
+                    'fields': fields,
+                    'confidence': round(confidence, 2),
+                    'processing_method': get_processing_method(doc_type)
+                }
+                
+                # Add annotated image URL if available
+                if annotated_image_url:
+                    result['annotated_image_url'] = annotated_image_url
+                
+                results.append(result)
+                
+                # Clean up uploaded file
+                os.remove(file_path)
+                
+            except Exception as e:
+                results.append({
+                    'filename': file.filename,
+                    'document_type': document_types.get(file.filename, 'Unknown'),
+                    'fields': {},
+                    'confidence': 0,
+                    'error': str(e)
+                })
+        
+        processing_time = round(time.time() - processing_start, 2)
+        overall_confidence = round(total_confidence / len(results), 2) if results else 0
+        
+        return jsonify({
+            'applicant_name': applicant_name,
+            'total_documents': len(results),
+            'successful_matches': successful_matches,
+            'overall_confidence': overall_confidence,
+            'processing_time': processing_time,
+            'results': results
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 def extract_marksheet_fields(image):
@@ -1171,6 +1303,9 @@ def verify_document():
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    
+
+    
 
 
 @app.route('/verify_multiple', methods=['POST'])
