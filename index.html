@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Document Verification System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/css/index.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📄 Document Verification System</h1>
+            <p>Upload and verify your documents with AI-powered OCR technology</p>
+        </div>
+        <hr style="margin:32px 0;">
+        <div class="batch-container">
+            <form id="batchForm" enctype="multipart/form-data">
+                <div class="form-group">
+                    <input type="text" id="applicantName" name="applicant_name" placeholder="Applicant Name" required>
+                </div>
+                <div class="form-group">
+                    <input type="file" id="batchFiles" name="files" accept="image/*,.pdf" multiple required>
+                </div>
+                <button type="submit" class="submit-btn">📤 Upload & Verify Multiple</button>
+            </form>
+            <div class="result" id="batchResult">
+                <!-- Batch results will be populated here -->
+            </div>
+        </div>
+    </div>
+    <script src="/static/js/index.js"></script>
+</body>
+</html>

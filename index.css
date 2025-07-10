@@ -1,0 +1,116 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #f4f6fa;
+    margin: 0;
+    padding: 0;
+    color: #22223b;
+}
+.container {
+    max-width: 540px;
+    margin: 40px auto;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    padding: 32px 28px 28px 28px;
+}
+.header {
+    text-align: center;
+    margin-bottom: 18px;
+}
+.header h1 {
+    font-size: 2.1rem;
+    color: #2563eb;
+    margin-bottom: 8px;
+    font-weight: 700;
+}
+.header p {
+    color: #64748b;
+    font-size: 1.08rem;
+    margin: 0;
+}
+hr {
+    border: none;
+    border-top: 1px solid #e2e8f0;
+    margin: 32px 0 24px 0;
+}
+.batch-container {
+    margin-top: 18px;
+}
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    align-items: stretch;
+    margin-bottom: 0;
+}
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+input[type="text"],
+input[type="file"] {
+    padding: 10px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 5px;
+    background: #f9fafb;
+    font-size: 1rem;
+    transition: border 0.2s;
+}
+input[type="text"]:focus,
+input[type="file"]:focus {
+    border-color: #2563eb;
+    outline: none;
+}
+.submit-btn {
+    background: linear-gradient(90deg, #2563eb 60%, #1e40af 100%);
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    padding: 12px 0;
+    font-size: 1.08rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(37,99,235,0.08);
+    transition: background 0.2s, box-shadow 0.2s;
+    margin-top: 4px;
+}
+.submit-btn:hover {
+    background: linear-gradient(90deg, #1e40af 60%, #2563eb 100%);
+    box-shadow: 0 4px 16px rgba(37,99,235,0.13);
+}
+.result {
+    margin-top: 28px;
+    background: #f1f5f9;
+    border-radius: 8px;
+    padding: 20px 18px;
+    min-height: 40px;
+    font-size: 1rem;
+    color: #22223b;
+    word-break: break-word;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+.result img {
+    max-width: 100%;
+    margin-top: 16px;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+}
+@media (max-width: 600px) {
+    .container {
+        max-width: 98vw;
+        padding: 16px 4vw 18px 4vw;
+    }
+    .header h1 {
+        font-size: 1.3rem;
+    }
+    .result {
+        padding: 12px 6px;
+    }
+}
