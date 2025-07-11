@@ -1,32 +1,833 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Document Verification System</title>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="/static/css/index.css">
+    <title>AI Document Verification System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+            min-height: 100vh;
+            color: #334155;
+            line-height: 1.6;
+        }
+
+        .main-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            padding: 40px 40px 50px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+            opacity: 0.3;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .form-section {
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #374151;
+            font-size: 0.95rem;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 16px 20px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: #f9fafb;
+            outline: none;
+        }
+
+        input[type="text"]:focus {
+            border-color: #3b82f6;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .drop-area {
+            border: 2px dashed #d1d5db;
+            border-radius: 16px;
+            padding: 60px 30px;
+            text-align: center;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .drop-area::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(29, 78, 216, 0.05) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .drop-area:hover::before {
+            opacity: 1;
+        }
+
+        .drop-area.active {
+            border-color: #3b82f6;
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            transform: scale(1.02);
+        }
+
+        .drop-area-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: #6b7280;
+        }
+
+        .drop-area h3 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #374151;
+        }
+
+        .drop-area p {
+            color: #6b7280;
+            font-size: 0.95rem;
+        }
+
+        .file-list {
+            margin-top: 30px;
+        }
+
+        .file-item {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .file-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(to bottom, #3b82f6, #1d4ed8);
+            transform: scaleY(0);
+            transition: transform 0.3s ease;
+        }
+
+        .file-item:hover::before {
+            transform: scaleY(1);
+        }
+
+        .file-item:hover {
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .file-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .file-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .file-info h4 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 4px;
+        }
+
+        .file-info p {
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+
+        .file-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.6);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+            border: 1px solid #d1d5db;
+        }
+
+        .btn-secondary:hover {
+            background: #e5e7eb;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .select-field {
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            outline: none;
+            background: white;
+            min-width: 200px;
+        }
+
+        .select-field:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .status-container {
+            margin: 30px 0;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 12px;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .loader {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border: 3px solid #e5e7eb;
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results-container {
+            margin-top: 30px;
+        }
+
+        .result-item {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .result-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #111827;
+        }
+
+        .result-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-pass {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge-fail {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .result-card {
+            background: #f9fafb;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .result-card h5 {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #6b7280;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .result-card p {
+            font-size: 1rem;
+            color: #111827;
+            font-weight: 500;
+        }
+
+        .collapsible {
+            margin-top: 20px;
+        }
+
+        .collapsible summary {
+            padding: 15px;
+            background: #f3f4f6;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #374151;
+            transition: background 0.3s ease;
+        }
+
+        .collapsible summary:hover {
+            background: #e5e7eb;
+        }
+
+        .collapsible-content {
+            padding: 20px;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+        }
+
+        .collapsible pre {
+            background: #1f2937;
+            color: #f9fafb;
+            padding: 20px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            max-height: 300px;
+            overflow: auto;
+            font-family: 'Fira Code', 'Consolas', monospace;
+        }
+
+        .collapsible img {
+            max-width: 100%;
+            border-radius: 12px;
+            margin-top: 15px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+            transition: width 0.3s ease;
+        }
+
+        .confirmed-badge {
+            background: #d1fae5;
+            color: #065f46;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 16px;
+            }
+
+            .header {
+                padding: 30px 20px 40px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .result-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .file-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .btn {
+                justify-content: center;
+            }
+        }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>📄 Document Verification System</h1>
-            <p>Upload and verify your documents with AI-powered OCR technology</p>
-        </div>
-        <hr style="margin:32px 0;">
-        <div class="batch-container">
-            <form id="batchForm" enctype="multipart/form-data">
-                <div class="form-group">
-                    <input type="text" id="applicantName" name="applicant_name" placeholder="Applicant Name" required>
-                </div>
-                <div class="form-group">
-                    <input type="file" id="batchFiles" name="files" accept="image/*,.pdf" multiple required>
-                </div>
-                <button type="submit" class="submit-btn">📤 Upload & Verify Multiple</button>
-            </form>
-            <div class="result" id="batchResult">
-                <!-- Batch results will be populated here -->
+    <div class="main-container">
+        <div class="container">
+            <div class="header">
+                <h1>🔍 AI Document Verification</h1>
+                <p>Secure, intelligent document processing with advanced AI technology</p>
+            </div>
+
+            <div class="content">
+                <form id="verifyForm">
+                    <div class="form-section">
+                        <div class="form-group">
+                            <label for="userName">Application Name</label>
+                            <input type="text" id="userName" name="userName" placeholder="Enter your application name" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Document Upload</label>
+                            <div id="dropArea" class="drop-area">
+                                <div class="drop-area-icon">📄</div>
+                                <h3>Drop your documents here</h3>
+                                <p>or click to browse files (PDF, Images supported)</p>
+                                <input type="file" id="fileInput" multiple accept="image/*,.pdf" style="display:none;">
+                            </div>
+                        </div>
+
+                        <div id="fileList" class="file-list"></div>
+
+                        <button type="submit" id="submitBtn" class="btn btn-primary" disabled>
+                            <span>🚀</span> Verify Documents
+                        </button>
+                    </div>
+                </form>
+
+                <div id="status" class="status-container" style="display:none;"></div>
+                <div id="results" class="results-container"></div>
             </div>
         </div>
     </div>
-    <script src="/static/js/index.js"></script>
+
+    <script>
+        const dropArea = document.getElementById('dropArea');
+        const fileInput = document.getElementById('fileInput');
+        const verifyForm = document.getElementById('verifyForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const statusDiv = document.getElementById('status');
+        const resultsDiv = document.getElementById('results');
+        const fileListDiv = document.getElementById('fileList');
+        let files = [];
+        let fileStates = [];
+
+        // File handling
+        dropArea.onclick = () => fileInput.click();
+        dropArea.ondragover = e => { e.preventDefault(); dropArea.classList.add('active'); };
+        dropArea.ondragleave = e => { e.preventDefault(); dropArea.classList.remove('active'); };
+        dropArea.ondrop = e => {
+            e.preventDefault();
+            dropArea.classList.remove('active');
+            handleFiles(e.dataTransfer.files);
+        };
+        fileInput.onchange = e => handleFiles(e.target.files);
+
+        function handleFiles(fileList) {
+            for (let file of fileList) {
+                if (!files.some(f => f.name === file.name && f.size === file.size)) {
+                    files.push(file);
+                }
+            }
+            fileStates = files.map(f => ({
+                file: f,
+                predictedType: '',
+                confirmedType: '',
+                confirmed: false
+            }));
+            classifyAllFiles();
+        }
+
+        async function classifyAllFiles() {
+            fileListDiv.innerHTML = '';
+            for (let i = 0; i < fileStates.length; i++) {
+                const fd = new FormData();
+                fd.append('file', fileStates[i].file);
+                fileListDiv.innerHTML += `
+                    <div class="file-item" id="fileItem${i}">
+                        <div class="file-header">
+                            <div class="file-icon">${fileStates[i].file.name.split('.').pop().toUpperCase()}</div>
+                            <div class="file-info">
+                                <h4>${fileStates[i].file.name}</h4>
+                                <p>Size: ${(fileStates[i].file.size / 1024 / 1024).toFixed(2)} MB</p>
+                            </div>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 0%"></div>
+                        </div>
+                        <p style="color: #6b7280; margin-top: 10px;">🔄 Classifying document...</p>
+                    </div>
+                `;
+                try {
+                    const res = await fetch('/classify_document', { method: 'POST', body: fd });
+                    const data = await res.json();
+                    fileStates[i].predictedType = data.document_type || 'Unknown';
+                    fileStates[i].confirmedType = data.document_type || 'Unknown';
+                } catch (err) {
+                    fileStates[i].predictedType = 'Unknown';
+                    fileStates[i].confirmedType = 'Unknown';
+                }
+                renderFileList();
+            }
+        }
+
+        function renderFileList() {
+            fileListDiv.innerHTML = '';
+            fileStates.forEach((fileState, idx) => {
+                const fileExt = fileState.file.name.split('.').pop().toUpperCase();
+                const isConfirmed = fileState.confirmed;
+                
+                let html = `
+                    <div class="file-item">
+                        <div class="file-header">
+                            <div class="file-icon">${fileExt}</div>
+                            <div class="file-info">
+                                <h4>${fileState.file.name}</h4>
+                                <p>Size: ${(fileState.file.size / 1024 / 1024).toFixed(2)} MB</p>
+                            </div>
+                            ${isConfirmed ? '<div class="confirmed-badge">✅ Confirmed</div>' : ''}
+                        </div>
+                        <div class="result-card">
+                            <h5>Predicted Document Type</h5>
+                            <p>${fileState.predictedType}</p>
+                        </div>
+                `;
+
+                if (!isConfirmed) {
+                    html += `
+                        <div class="file-actions">
+                            <p style="margin-right: 15px; color: #374151; font-weight: 500;">Is this classification correct?</p>
+                            <button type="button" class="btn btn-success" onclick="confirmType(${idx}, true)">
+                                ✅ Yes, Correct
+                            </button>
+                            <button type="button" class="btn btn-danger" onclick="confirmType(${idx}, false)">
+                                ❌ No, Incorrect
+                            </button>
+                        </div>
+                        <div id="manualType${idx}" style="display:none; margin-top: 20px;">
+                            <label style="display: block; margin-bottom: 10px;">Select correct document type:</label>
+                            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                                <select id="typeSelect${idx}" class="select-field">
+                                    <option value="">Select document type</option>
+                                    <option value="Aadhar Card">Aadhar Card</option>
+                                    <option value="PAN Card">PAN Card</option>
+                                    <option value="Handicap Smart Card">Handicap Smart Card</option>
+                                    <option value="Birth Certificate">Birth Certificate</option>
+                                    <option value="Bonafide Certificate">Bonafide Certificate</option>
+                                    <option value="Caste Certificate">Caste Certificate</option>
+                                    <option value="Salary Slip">Salary Slip</option>
+                                    <option value="Passport">Passport</option>
+                                    <option value="Marksheet">Marksheet</option>
+                                    <option value="Transgender Certificate">Transgender Certificate</option>
+                                </select>
+                                <button type="button" class="btn btn-primary" onclick="setManualType(${idx})">
+                                    Confirm Selection
+                                </button>
+                            </div>
+                        </div>
+
+                        </div>
+                    `;
+                } else {
+                    html += `
+                        <div class="result-card">
+                            <h5>Confirmed Type</h5>
+                            <p style="color: #065f46; font-weight: 600;">${fileState.confirmedType}</p>
+                        </div>
+                    `;
+                }
+
+                html += `</div>`;
+                fileListDiv.innerHTML += html;
+            });
+            
+            submitBtn.disabled = !fileStates.every(f => f.confirmed) || fileStates.length === 0;
+        }
+
+        window.confirmType = function(idx, isYes) {
+            if (isYes) {
+                fileStates[idx].confirmed = true;
+                renderFileList();
+            } else {
+                document.getElementById('manualType' + idx).style.display = 'block';
+            }
+        };
+
+        window.setManualType = function(idx) {
+            const select = document.getElementById('typeSelect' + idx);
+            if (select.value) {
+                fileStates[idx].confirmedType = select.value;
+                fileStates[idx].confirmed = true;
+                renderFileList();
+            }
+        };
+
+        // Form submission
+        verifyForm.onsubmit = async (e) => {
+            e.preventDefault();
+            
+            if (files.length === 0) {
+                alert('Please select at least one document.');
+                return;
+            }
+            
+            const userName = document.getElementById('userName').value.trim();
+            if (!userName) {
+                alert('Please enter the application name.');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            statusDiv.style.display = 'block';
+            statusDiv.innerHTML = '<div class="loader"></div><strong>Processing documents...</strong><br><p style="margin-top: 10px;">This may take a few moments while we analyze your documents.</p>';
+            resultsDiv.innerHTML = '';
+
+            // Prepare form data for backend
+            const formData = new FormData();
+            fileStates.forEach((fileState, idx) => {
+                formData.append('files', fileState.file);
+            });
+            formData.append('user_name', userName);
+            fileStates.forEach((fileState) => {
+                formData.append('confirmed_types', fileState.confirmedType);
+            });
+
+            try {
+                const response = await fetch('/process_documents', {
+                    method: 'POST',
+                    body: formData
+                });
+                if (!response.ok) {
+                    throw new Error('Server error: ' + response.statusText);
+                }
+                const data = await response.json();
+                if (data.results) {
+                    displayResults(data.results);
+                } else {
+                    resultsDiv.innerHTML = '<div style="color: #dc2626; font-weight: 600;">Error: ' + (data.error || 'Unknown error') + '</div>';
+                }
+            } catch (err) {
+                resultsDiv.innerHTML = '<div style="color: #dc2626; font-weight: 600;">Error: ' + err.message + '</div>';
+            }
+            submitBtn.disabled = false;
+            statusDiv.style.display = 'none';
+            // Reset form
+            files = [];
+            fileStates = [];
+            fileListDiv.innerHTML = '';
+            document.getElementById('userName').value = '';
+        };
+
+        function displayResults(results) {
+            let html = '<h2 style="margin-bottom: 30px; color: #111827; font-size: 1.5rem;">📊 Verification Results</h2>';
+            
+            results.forEach(result => {
+                const isPass = result.match_result === 'pass';
+                html += `
+                    <div class="result-item">
+                        <div class="result-header">
+                            <h3 class="result-title">${result.filename}</h3>
+                            <span class="result-badge ${isPass ? 'badge-pass' : 'badge-fail'}">
+                                ${isPass ? '✅ Verified' : '❌ Failed'}
+                            </span>
+                        </div>
+                        
+                        <div class="result-grid">
+                            <div class="result-card">
+                                <h5>Document Type</h5>
+                                <p>${result.doc_type} ${result.confidence ? `(${result.confidence}% confidence)` : ''}</p>
+                            </div>
+                            <div class="result-card">
+                                <h5>Extracted Name</h5>
+                                <p>${result.extracted_name || '<em>Not found</em>'}</p>
+                            </div>
+                            <div class="result-card">
+                                <h5>Application Name</h5>
+                                <p>${result.user_name}</p>
+                            </div>
+                            <div class="result-card">
+                                <h5>Match Score</h5>
+                                <p style="color: ${isPass ? '#059669' : '#dc2626'}; font-weight: 600;">
+                                    ${result.match_score}%
+                                </p>
+                            </div>
+                        </div>
+
+                        ${result.fields && Object.keys(result.fields).length > 0 ? `
+                            <details class="collapsible">
+                                <summary>📋 View Extracted Fields</summary>
+                                <div class="collapsible-content">
+                                    <pre>${Object.entries(result.fields).map(([k,v]) => `${k}: ${v}`).join('\n')}</pre>
+                                </div>
+                            </details>
+                        ` : ''}
+
+                        <details class="collapsible">
+                            <summary>📝 View Raw OCR Text</summary>
+                            <div class="collapsible-content">
+                                <pre>${result.raw_text}</pre>
+                            </div>
+                        </details>
+
+                        ${result.annotated_image ? `
+                            <details class="collapsible">
+                                <summary>🖼️ View Annotated Image</summary>
+                                <div class="collapsible-content">
+                                    <img src="data:image/jpeg;base64,${result.annotated_image}" alt="Annotated document">
+                                </div>
+                            </details>
+                        ` : ''}
+                    </div>
+                `;
+            });
+            
+            resultsDiv.innerHTML = html;
+        }
+    </script>
 </body>
 </html>
